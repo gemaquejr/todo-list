@@ -4,7 +4,8 @@
   "description": "Aplicativo de lista de tarefas",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "npx tsc -w"
   },
   "repository": {
     "type": "git",
@@ -16,5 +17,8 @@
   "bugs": {
     "url": "https://github.com/gemaquejr/todo-list/issues"
   },
-  "homepage": "https://github.com/gemaquejr/todo-list#readme"
+  "homepage": "https://github.com/gemaquejr/todo-list#readme",
+  "dependencies": {
+    "typescript": "^4.9.4"
+  }
 }
