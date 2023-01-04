@@ -2,11 +2,12 @@
     enum NotificationPlatform {
         SMS = "SMS",
         EMAIL = "EMAIL",
-        PUSH_NOTIFICATION = "PUSH_NOTIFICATION"
+        PUSH_NOTIFICATION = "PUSH_NOTIFICATION",
     }
 
-    const UUID = (): string => {
-        return Math.random().toString(32).substring(2,9)
+    enum ViewMode {
+        TODO = "TODO",
+        REMINDER = "REMINDER",
     }
 
     const DateUtils = {
@@ -22,7 +23,11 @@
 
         formatDate(date: Date): string {
             return `${date.getDate()}.${date.getMonth() + 1}.${date.getFullYear()}`
-        }
+        },
+    }
+
+    const UUID = (): string => {
+        return Math.random().toString(32).substring(2,9)
     }
 
     interface Task {
@@ -53,7 +58,7 @@
             ---> Reminder <---
             description: ${this.description}
             date: ${DateUtils.formatDate(this.date)}
-            platform: ${this.notifications.join(",")}
+            platform: ${this.notifications.join(',')}
             `;
         }        
     }
@@ -84,7 +89,27 @@
     const reminderMock = new Reminder("Reminder criado com a classe", new Date(), [NotificationPlatform.EMAIL] )
 
     const taskView = {
-        render(tasks: Array<Task>) {
+        getTodo(form: HTMLFormElement): Todo {
+            const todoDescription = form.todoDescription.value;
+            form.reset();
+            return new Todo(todoDescription);
+        },
+        
+        getReminder(form: HTMLFormElement): Reminder {
+            const reminderDescription = form.reminderDescription.value;
+            const reminderDate = new Date(form.reminderDate.value);
+            const reminderNotifications = [
+                form.notifications.value as NotificationPlatform,
+            ];
+            form.reset();
+            return new Reminder(
+                reminderDescription,
+                reminderDate,
+                reminderNotifications
+                );
+        },
+
+        render(tasks: Array<Task>, mode: ViewMode) {
             const tasksList = document.getElementById("tasksList")
             while (tasksList?.firstChild) {
                 tasksList.removeChild(tasksList.firstChild);
@@ -96,17 +121,55 @@
                 li.appendChild(textNode);
                 tasksList?.appendChild(li);
             });
+
+            const todoSet = document.getElementById("todoSet");
+            const reminderSet = document.getElementById("reminderSet");
+
+            if (mode === ViewMode.TODO) {
+                todoSet?.setAttribute("style", "display: block");
+                todoSet?.removeAttribute("disabled");
+                reminderSet?.setAttribute("style", "display: none");
+                reminderSet?.setAttribute("disabled", "true");
+            } else {
+                reminderSet?.setAttribute("style", "display: block");
+                reminderSet?.removeAttribute("disabled");
+                todoSet?.setAttribute("style", "display: none");
+                todoSet?.setAttribute("disabled", "true");
+            }
         },
     };
 
     const TaskController = (view: typeof taskView) => {
-        const tasks: Array<Task> = [todoMock, reminderMock];
+        const tasks: Array<Task> = [];
+        let mode: ViewMode = ViewMode.TODO;
 
         const handlerEvent = (event: Event) => {
             event.preventDefault();
-            view.render(tasks);
+            const form = event.target as HTMLFormElement;
+            switch (mode as ViewMode) {
+                case ViewMode.TODO:
+                    tasks.push(view.getTodo(form))
+                    break;
+                case ViewMode.REMINDER:
+                    tasks.push(view.getReminder(form))
+                    break;
+            }
+            view.render(tasks, mode);
         };
 
+        const handlerToggleMode = () => {
+            switch (mode as ViewMode) {
+                case ViewMode.TODO:
+                    mode = ViewMode.REMINDER
+                    break;
+                case ViewMode.REMINDER:
+                    mode = ViewMode.TODO
+                    break
+            }
+            view.render(tasks, mode);
+        }
+
+        document.getElementById("toggleMode")?.addEventListener("click", handlerToggleMode);
         document.getElementById("taskForm")?.addEventListener("submit", handlerEvent);
     };
 
